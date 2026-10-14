@@ -54,6 +54,10 @@ export default {
     const { replaceInstallationName } = useBranding();
     return {
       replaceInstallationName,
+      mesaLogos: {
+        light: '/mesa/wordmark.svg',
+        dark: '/mesa/wordmark-dark.svg',
+      },
       v$: useVuelidate(),
     };
   },
@@ -300,13 +304,12 @@ export default {
   >
     <section class="max-w-5xl mx-auto">
       <img
-        :src="globalConfig.logo"
+        :src="mesaLogos.light"
         :alt="globalConfig.installationName"
         class="block w-auto h-8 mx-auto dark:hidden"
       />
       <img
-        v-if="globalConfig.logoDark"
-        :src="globalConfig.logoDark"
+        :src="mesaLogos.dark"
         :alt="globalConfig.installationName"
         class="hidden w-auto h-8 mx-auto dark:block"
       />
@@ -343,7 +346,7 @@ export default {
     <!-- Regular Login Section -->
     <section
       v-else
-      class="bg-white shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
+      class="bg-n-solid-2 border border-n-weak shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
       :class="{
         'mb-8 mt-15': !showGoogleOAuth,
         'animate-wiggle': loginApi.hasErrored,

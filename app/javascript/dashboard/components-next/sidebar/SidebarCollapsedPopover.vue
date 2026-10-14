@@ -109,7 +109,7 @@ onMounted(async () => {
   <TeleportWithDirection>
     <div
       ref="popoverRef"
-      class="fixed z-[100] min-w-[200px] max-w-[280px]"
+      class="mesa-surface fixed z-[100] min-w-[200px] max-w-[280px]"
       :style="{
         [isRTL ? 'right' : 'left']: `${sidebarWidth + 8}px`,
         top: `${topPosition}px`,

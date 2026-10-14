@@ -39,10 +39,15 @@ const tailwindConfig = {
   ],
   theme: {
     extend: {
+      boxShadow: {
+        'mesa-cta':
+          '0 1px 0 rgba(255,255,255,0.18) inset, 0 10px 22px -14px rgba(143,39,37,0.55)',
+      },
       fontFamily: {
         sans: defaultSansFonts,
         inter: ['Inter', ...defaultSansFonts],
         interDisplay: ['InterDisplay', ...defaultSansFonts],
+        display: ['Mesa Fraunces', 'Georgia', 'serif'],
       },
       fontWeight: {
         420: '420',
@@ -211,6 +216,7 @@ const tailwindConfig = {
     colors: {
       transparent: 'transparent',
       white: '#fff',
+      'mesa-glow': '#ffd451',
       'modal-backdrop-light': 'rgba(0, 0, 0, 0.4)',
       'modal-backdrop-dark': 'rgba(0, 0, 0, 0.6)',
       current: 'currentColor',
@@ -263,6 +269,7 @@ const tailwindConfig = {
     },
   },
   plugins: [
+    require('./theme/mesa'),
     // eslint-disable-next-line
     require('@tailwindcss/typography'),
     iconsPlugin({

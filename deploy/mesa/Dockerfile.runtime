@@ -1,0 +1,8 @@
+# Used to install a UI bundle compiled by deploy/mesa/Dockerfile on an ARM64 builder.
+FROM chatwoot/chatwoot:v4.18.0-ce@sha256:faaa58a911cda8f2ab9d717ddf8ca4332163b07da4c5da10711d896e5d667442
+ARG MESA_REVISION
+LABEL org.opencontainers.image.source="https://github.com/mesainc/chatwoot" org.opencontainers.image.revision="$MESA_REVISION"
+COPY public /app/public
+COPY vueapp.html.erb /app/app/views/layouts/vueapp.html.erb
+COPY .git_sha /app/.git_sha
+RUN test -n "$MESA_REVISION" && test "$(cat /app/.git_sha)" = "$MESA_REVISION"

@@ -27,6 +27,7 @@ storage=$(docker volume inspect chatwoot_storage -f '{{.Mountpoint}}')
 tar -C "$storage" -czf "$work/storage.tgz" .
 cp /etc/chatwoot/chatwoot.env compose.yaml "$work/"
 cp REVISION "$work/"
+if [ -f mesa-ui.tgz ]; then cp mesa-ui.tgz "$work/"; fi
 if [ -f /etc/chatwoot/mail-relay.env ]; then
   cp /etc/chatwoot/mail-relay.env "$work/"
   cp -R mail-relay "$work/"

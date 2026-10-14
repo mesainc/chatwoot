@@ -1,0 +1,1 @@
+Mesa geometric brand mark copied without path changes from Mesa Studio, apps/web/src/components/mesa-logo.tsx (MesaBrandMark). White on the burgundy rail/dark login; official Warm Red #ed423a on light login. Fraunces is the same self-hosted font as Plane; see fonts/OFL.txt.
