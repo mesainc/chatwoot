@@ -23,8 +23,21 @@ docker pause chatwoot-rails-1 chatwoot-sidekiq-1 >/dev/null
 docker exec chatwoot-postgres-1 sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$work/database.dump"
 docker exec chatwoot-redis-1 sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli SAVE' >/dev/null
 docker cp chatwoot-redis-1:/data/dump.rdb "$work/redis.rdb"
-storage=$(docker volume inspect chatwoot_storage -f '{{.Mountpoint}}')
-tar -C "$storage" -czf "$work/storage.tgz" .
+service=$(python3 -c "import sys; sys.path.insert(0, '/usr/local/lib/chatwoot/storage'); from update_env import read_env; print(read_env('/etc/chatwoot/chatwoot.env')['ACTIVE_STORAGE_SERVICE'])")
+case "$service" in
+  local)
+    storage=$(docker volume inspect chatwoot_storage -f '{{.Mountpoint}}')
+    tar -C "$storage" -czf "$work/storage.tgz" .
+    ;;
+  s3_compatible)
+    docker compose --env-file /etc/chatwoot/chatwoot.env -f compose.yaml run --rm --no-deps -T \
+      --entrypoint bundle -v "$work:/snapshot" \
+      -v /usr/local/lib/chatwoot/storage/files.rb:/tmp/storage-files.rb:ro \
+      rails exec rails runner /tmp/storage-files.rb snapshot /snapshot/object-storage > "$work/storage.log" 2>&1
+    ;;
+  *) echo 'Unsupported upload storage service'; exit 1 ;;
+esac
+cp -R /usr/local/lib/chatwoot/storage "$work/storage-tools"
 cp /etc/chatwoot/chatwoot.env compose.yaml "$work/"
 cp REVISION "$work/"
 if [ -f mesa-ui.tgz ]; then cp mesa-ui.tgz "$work/"; fi

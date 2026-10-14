@@ -12,7 +12,9 @@ branding remains controlled by its inbox. No enterprise features are unlocked.
 - URL: `https://chatwoot.mesa.tech`; Cloudflare DNS-only A record to `147.224.162.1`.
 - Existing Oracle Cloud `plane-pilot`, Chicago, ARM64, 4 cores / 24 GB RAM.
 - Stack: `/home/ubuntu/chatwoot/compose.yaml`; secrets: `/etc/chatwoot/chatwoot.env` (root, `0600`).
-- Separate PostgreSQL with pgvector, Redis, and upload volumes. No published container ports.
+- Separate PostgreSQL with pgvector and Redis. Live uploads use the private, versioned OCI
+  `mesa-chatwoot-pilot-uploads` bucket in Chicago; the original disk volume is retained for rollback.
+  No published container ports. See [upload storage](storage/README.md) for cutover and recovery.
 - The web container and signature-verifying email relay join `plane_default`, as `chatwoot-web` and `chatwoot-mail-relay`, for Plane's existing Caddy proxy.
 - Caddy route: `/data/mesa-sites/chatwoot.caddy` in the persistent `plane_proxy_data` volume.
   Plane's canonical Caddyfile imports `/data/mesa-sites/*.caddy`, so later Plane deployments retain it.
@@ -43,6 +45,8 @@ install -m 700 backup.sh /usr/local/sbin/chatwoot-backup.sh
 install -m 700 health.sh /usr/local/sbin/chatwoot-health.sh
 install -d -m 755 /usr/local/lib/chatwoot
 install -m 644 upload_backup.py /usr/local/lib/chatwoot/upload_backup.py
+install -d -m 755 /usr/local/lib/chatwoot/storage
+install -m 644 storage/files.rb storage/update_env.py /usr/local/lib/chatwoot/storage/
 sh deploy.sh
 ```
 
@@ -93,14 +97,21 @@ Keep the prior image and archive until the new release is verified.
 The nightly backup briefly pauses Chatwoot web/background processes to make database, uploads,
 Redis queue, application secrets and deployment metadata consistent. Plane continues serving.
 It resumes Chatwoot even if the backup fails. Archives are root-readable only, with seven-day
-local retention after successful upload. The existing bucket-scoped Plane backup identity uploads
+local retention after successful upload. OCI upload snapshots include every current object and
+its metadata, verify database references and checksums, and fail if the bucket changes during capture.
+The existing bucket-scoped Plane backup identity uploads
 to the private OCI backup bucket under `snapshots/chatwoot/`; existing lifecycle rules retain
 current archives 90 days and previous versions 30 days. No Plane object is changed.
 
 To restore, retrieve and verify an archive from OCI, extract it in a root-only directory,
 restore `chatwoot.env`, `mail-relay.env`, relay source and the archived image/compose revision, start PostgreSQL/Redis, then
 restore `database.dump` with `pg_restore` into a fresh `chatwoot_production` database. Extract
-`storage.tgz` into `chatwoot_storage`. Before starting Redis, install `redis.rdb` into its volume
+`storage.tgz` into `chatwoot_storage` for old disk-based snapshots. For OCI snapshots, provision an
+empty private/versioned replacement uploads bucket, set its restricted credentials in `chatwoot.env`,
+then run the archived `storage-tools/files.rb restore /snapshot/object-storage` with the matching
+Rails image and the extracted backup mounted at `/snapshot` before starting writers. The helper
+refuses a nonempty destination and verifies uploaded bytes. See the [storage runbook](storage/README.md).
+Before starting Redis, install `redis.rdb` into its volume
 and remove only the replacement instance's empty AOF directory so it loads that snapshot.
 For Mesa UI releases, the backup includes `mesa-ui.tgz`. Extract it and build its Dockerfile
 with the archived `.git_sha` as `MESA_REVISION`, using the `CHATWOOT_IMAGE` tag from the private
