@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>
-      <%= @global_config['INSTALLATION_NAME'] %>
-    </title>
+    <title><%= @global_config['INSTALLATION_NAME'] %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=0"/>
     <% unless ChatwootApp.chatwoot_cloud? %>
       <meta name="robots" content="noindex">
     <% end %>
     <% if @global_config['DISPLAY_MANIFEST'] %>
-      <meta name="msapplication-TileColor" content="#2781F6">
+      <meta name="msapplication-TileColor" content="#70122f">
       <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
-      <meta name="theme-color" content="#2781F6">
+      <meta name="theme-color" content="#70122f">
       <meta name="description" content="<%= @global_config['INSTALLATION_NAME'] %> is a customer support solution that helps companies engage customers over Messenger, Twitter, Telegram, WeChat, Whatsapp. Simply connect your channels and converse with your customers from a single place. Easily add new agents to your system and have them own and resolve conversations with customers. <%= @global_config['INSTALLATION_NAME'] %> also gives you real-time reports to measure your team's performance, canned responses to easily respond to frequently asked questions and private notes for agents to collaborate among themselves.">
       <% if ENV['IOS_APP_IDENTIFIER'].present? %>
         <meta name="apple-itunes-app" content='app-id=<%= ENV['IOS_APP_IDENTIFIER'] %>'>
@@ -31,7 +29,7 @@
       <link class="favicon" rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
       <link rel="manifest" href="/manifest.json">
     <% end %>
-    <link rel="icon" type="image/png" sizes="512x512" href="<%= @global_config['LOGO_THUMBNAIL'] %>">
+    <link rel="icon" type="image/svg+xml" href="/mesa/mesa-symbol-red.svg">
     <%= csrf_meta_tags %>
     <script>
       window.chatwootConfig = {
@@ -77,7 +75,7 @@
     <%= vite_client_tag %>
     <%= vite_javascript_tag @application_pack %>
   </head>
-  <body class="text-slate-600">
+  <body class="mesa-dashboard text-n-slate-12">
     <div id="app"></div>
     <noscript id="noscript">This app works best with JavaScript enabled.</noscript>
     <%= yield %>

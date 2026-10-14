@@ -2,8 +2,10 @@
 
 Mesa's fork is `https://github.com/mesainc/chatwoot`. The `mesa` branch starts at upstream stable
 `v4.18.0` (`9f920b549c14491a4e587687a3eed5d21c6ccc7d`), with deployment files added here.
-Application code is unchanged. The pilot uses the matching official Community Edition image,
-pinned by digest. Future application changes require a Mesa-built image and a deliberate image update.
+Mesa staff pages use the shared Mesa geometric mark, self-hosted Fraunces display font, Inter controls,
+warm surface tokens and burgundy navigation. The backend remains the matching official Community
+Edition runtime, pinned by digest; compiled staff UI assets are layered over it. Customer widget
+branding remains controlled by its inbox. No enterprise features are unlocked.
 
 ## Hosting and limits
 
@@ -61,6 +63,31 @@ Run `/usr/local/sbin/chatwoot-health.sh` for service, free-disk, and backup fres
 Hourly results go to the system journal (`journalctl -t chatwoot-health`); this is logging,
 not an external notification service. Backup logs are in `/var/log/chatwoot-backup.log`.
 
+## Mesa UI releases
+
+Build on an ARM64 development machine, then inspect login, conversations, settings, controls and
+menus in both themes before packaging. The shared host assembles a small runtime layer only:
+
+```sh
+revision=$(git rev-parse HEAD)
+image="mesa/chatwoot:v4.18.0-mesa-$revision"
+docker build --build-arg MESA_REVISION="$revision" -f deploy/mesa/Dockerfile -t "$image" .
+sh deploy/mesa/package-ui.sh "$image" /absolute/private/release/mesa-ui.tgz
+```
+
+Transfer the archive and operational files using the verified Bastion connection. On the host,
+keep the archive at `/home/ubuntu/chatwoot/mesa-ui.tgz` for backup/recovery, extract it into a release
+directory and build its Dockerfile with the same `MESA_REVISION` and image tag. Before changing
+`CHATWOOT_IMAGE` in the private environment, take a backup. Set that variable to the assembled tag,
+validate compose and recreate only `rails sidekiq` with `up -d --no-deps --wait --wait-timeout 300`.
+Run `configure-branding.rb` via `bundle exec rails runner` in the Rails container. This sets the
+installation name to Mesa Support, without changing inbox names or account permissions. Record
+the merged source commit in `REVISION`, verify the app and Plane, and take a new backup.
+
+For a UI rollback, restore the prior `CHATWOOT_IMAGE`, recreate only Rails/Sidekiq, and restore the
+previous compiled archive/REVISION metadata. No database migration is part of a UI-only release.
+Keep the prior image and archive until the new release is verified.
+
 ## Backups and recovery
 
 The nightly backup briefly pauses Chatwoot web/background processes to make database, uploads,
@@ -75,7 +102,9 @@ restore `chatwoot.env`, `mail-relay.env`, relay source and the archived image/co
 restore `database.dump` with `pg_restore` into a fresh `chatwoot_production` database. Extract
 `storage.tgz` into `chatwoot_storage`. Before starting Redis, install `redis.rdb` into its volume
 and remove only the replacement instance's empty AOF directory so it loads that snapshot.
-Never restore over a running instance. Validate privately before switching the edge route.
+For Mesa UI releases, the backup includes `mesa-ui.tgz`. Extract it and build its Dockerfile
+with the archived `.git_sha` as `MESA_REVISION`, using the `CHATWOOT_IMAGE` tag from the private
+environment, before starting Rails/Sidekiq. Never restore over a running instance. Validate privately before switching the edge route.
 
 Before an upgrade: take a backup, select a stable upstream release, update all image digests,
 run `db:chatwoot_prepare`, verify web/worker health and the public pilot, then record `REVISION`.
@@ -131,7 +160,7 @@ uses SMTP implicit TLS on port 465 with certificate verification.
 Build the relay from `mail-relay/`, restart Chatwoot Rails/Sidekiq for environment changes, and start
 `mail-relay`. Install the updated Caddy route with a validated reload. The relay has a 0.2-core,
 256-MB limit, runs without root privileges, uses a read-only filesystem, and logs no email contents.
-Dependency versions and the official Python base image are pinned. Application code remains stock.
+Dependency versions and the official Python base image are pinned. Mail handling uses stock Chatwoot endpoints.
 Backups include both private environment files and the relay source for recovery.
 
 Validate signed/invalid/expired webhooks, incoming MIME with attachments, duplicate delivery,

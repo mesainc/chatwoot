@@ -1,8 +1,8 @@
 name: chatwoot
 
 x-app: &app
-  # Unmodified upstream Community Edition, stable v4.18.0, native ARM64.
-  image: chatwoot/chatwoot:v4.18.0-ce@sha256:faaa58a911cda8f2ab9d717ddf8ca4332163b07da4c5da10711d896e5d667442
+  # Pinned upstream backend with optional Mesa UI overlay; Community Edition, stable v4.18.0, native ARM64.
+  image: ${CHATWOOT_IMAGE:-chatwoot/chatwoot:v4.18.0-ce@sha256:faaa58a911cda8f2ab9d717ddf8ca4332163b07da4c5da10711d896e5d667442}
   env_file: /etc/chatwoot/chatwoot.env
   volumes:
     - storage:/app/storage
