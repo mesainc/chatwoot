@@ -15,6 +15,7 @@ import { useWindowSize, useEventListener } from '@vueuse/core';
 import Button from 'dashboard/components-next/button/Button.vue';
 import SidebarGroup from './SidebarGroup.vue';
 import SidebarProfileMenu from './SidebarProfileMenu.vue';
+import SidebarThemeSwitcher from './SidebarThemeSwitcher.vue';
 import SidebarChangelogCard from './SidebarChangelogCard.vue';
 import SidebarChangelogButton from './SidebarChangelogButton.vue';
 import ChannelLeaf from './ChannelLeaf.vue';
@@ -1070,6 +1071,10 @@ const menuItems = computed(() => {
     >
       <div
         class="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-background to-transparent"
+      />
+      <SidebarThemeSwitcher
+        :is-collapsed="isEffectivelyCollapsed"
+        class="px-2 py-1.5"
       />
       <SidebarChangelogCard
         v-if="

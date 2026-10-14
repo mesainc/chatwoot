@@ -66,5 +66,7 @@ export function useAppearanceHotKeys() {
 
   return {
     goToAppearanceHotKeys,
+    themeOptions,
+    setAppearance,
   };
 }

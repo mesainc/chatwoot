@@ -1,9 +1,13 @@
+import { ref } from 'vue';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
+
+export const colorScheme = ref('auto');
 
 export const setColorTheme = isOSOnDarkMode => {
   const selectedColorScheme =
     LocalStorage.get(LOCAL_STORAGE_KEYS.COLOR_SCHEME) || 'auto';
+  colorScheme.value = selectedColorScheme;
   if (
     (selectedColorScheme === 'auto' && isOSOnDarkMode) ||
     selectedColorScheme === 'dark'
