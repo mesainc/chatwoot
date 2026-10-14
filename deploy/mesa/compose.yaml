@@ -20,6 +20,31 @@ x-app: &app
       condition: service_healthy
 
 services:
+  mail-relay:
+    build: ./mail-relay
+    image: mesa/chatwoot-mail-relay:pilot
+    env_file: /etc/chatwoot/mail-relay.env
+    restart: unless-stopped
+    cpus: 0.2
+    cpu_shares: 128
+    mem_limit: 256m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+    networks:
+      default:
+      edge:
+        aliases: [chatwoot-mail-relay]
+    depends_on:
+      rails:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   rails:
     <<: *app
     entrypoint: docker/entrypoints/rails.sh

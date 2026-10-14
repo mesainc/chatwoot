@@ -3,5 +3,18 @@ chatwoot.mesa.tech {
 	request_body {
 		max_size 25MB
 	}
-	reverse_proxy chatwoot-web:3000
+	@resend path /email-ingress/resend
+	@directRelay path /rails/action_mailbox/*
+	handle @directRelay {
+		respond 404
+	}
+	handle @resend {
+		request_body {
+			max_size 256KB
+		}
+		reverse_proxy chatwoot-mail-relay:8000
+	}
+	handle {
+		reverse_proxy chatwoot-web:3000
+	}
 }

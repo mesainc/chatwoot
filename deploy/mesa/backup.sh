@@ -27,6 +27,10 @@ storage=$(docker volume inspect chatwoot_storage -f '{{.Mountpoint}}')
 tar -C "$storage" -czf "$work/storage.tgz" .
 cp /etc/chatwoot/chatwoot.env compose.yaml "$work/"
 cp REVISION "$work/"
+if [ -f /etc/chatwoot/mail-relay.env ]; then
+  cp /etc/chatwoot/mail-relay.env "$work/"
+  cp -R mail-relay "$work/"
+fi
 docker unpause chatwoot-rails-1 chatwoot-sidekiq-1 >/dev/null
 paused=0
 archive="$dir/chatwoot-$stamp.tgz"

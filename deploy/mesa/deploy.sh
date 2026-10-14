@@ -14,7 +14,8 @@ compose config --quiet
 if docker inspect chatwoot-rails-1 >/dev/null 2>&1; then
   /usr/local/sbin/chatwoot-backup.sh
 fi
-compose pull
+compose pull --ignore-buildable
+compose build mail-relay
 compose up -d postgres redis
 # A run container inherits the web service's resource limits.
 compose run --rm --no-deps rails bundle exec rails db:chatwoot_prepare
