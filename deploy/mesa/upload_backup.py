@@ -19,7 +19,9 @@ digest = hashlib.file_digest(path.open('rb'), 'sha256').hexdigest()
 client = boto3.client('s3', endpoint_url=env['AWS_S3_ENDPOINT_URL'], region_name=env['AWS_REGION'], aws_access_key_id=env['AWS_ACCESS_KEY_ID'], aws_secret_access_key=env['AWS_SECRET_ACCESS_KEY'])
 # Reuse the existing 90-day snapshot / 30-day previous-version lifecycle.
 key = 'snapshots/chatwoot/' + path.name
-client.upload_file(str(path), env['AWS_S3_BUCKET_NAME'], key, ExtraArgs={'Metadata': {'sha256': digest}})
+# OCI multipart creation also requires overwrite permission; the backup identity is create-only.
+with path.open('rb') as source:
+    client.put_object(Bucket=env['AWS_S3_BUCKET_NAME'], Key=key, Body=source, Metadata={'sha256': digest})
 head = client.head_object(Bucket=env['AWS_S3_BUCKET_NAME'], Key=key)
 if head['ContentLength'] != path.stat().st_size or head['Metadata'].get('sha256') != digest:
     raise RuntimeError('Backup verification failed')
