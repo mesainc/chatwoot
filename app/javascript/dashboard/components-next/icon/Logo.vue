@@ -2,7 +2,7 @@
 import { useAttrs } from 'vue';
 
 const attrs = useAttrs();
-const logoPath = '/mesa/mark.svg';
+const logoPath = '/mesa/mesa-symbol-white.svg';
 </script>
 
 <template>

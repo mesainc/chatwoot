@@ -55,8 +55,8 @@ export default {
     return {
       replaceInstallationName,
       mesaLogos: {
-        light: '/mesa/wordmark.svg',
-        dark: '/mesa/wordmark-dark.svg',
+        light: '/mesa/mesa-symbol-red.svg',
+        dark: '/mesa/mesa-symbol-white.svg',
       },
       v$: useVuelidate(),
     };
