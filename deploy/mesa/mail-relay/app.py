@@ -127,10 +127,11 @@ def create_app(settings, transport=None):
                 raise HTTPException(502, 'Received email envelope mismatch')
             download_url = email['raw']['download_url']
             url = urlsplit(download_url)
-            # Resend's signed raw-email download is hosted on CloudFront.
+            # Resend returns a signed URL on its CDN (or a CloudFront distribution).
             if (url.scheme != 'https' or url.username or url.password or
                 url.port not in (None, 443) or not url.hostname or
-                not url.hostname.endswith(('.cloudfront.net', '.resend.com'))):
+                not (url.hostname == 'cdn.resend.app' or
+                     url.hostname.endswith(('.cloudfront.net', '.resend.com')))):
                 raise HTTPException(502, 'Unexpected raw email host')
             raw = bytearray()
             async with client.stream('GET', download_url) as download:
