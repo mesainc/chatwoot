@@ -11,13 +11,15 @@ pinned by digest. Future application changes require a Mesa-built image and a de
 - Existing Oracle Cloud `plane-pilot`, Chicago, ARM64, 4 cores / 24 GB RAM.
 - Stack: `/home/ubuntu/chatwoot/compose.yaml`; secrets: `/etc/chatwoot/chatwoot.env` (root, `0600`).
 - Separate PostgreSQL with pgvector, Redis, and upload volumes. No published container ports.
-- Only the web container joins `plane_default`, as `chatwoot-web`, for Plane's existing Caddy proxy.
+- The web container and signature-verifying email relay join `plane_default`, as `chatwoot-web` and `chatwoot-mail-relay`, for Plane's existing Caddy proxy.
 - Caddy route: `/data/mesa-sites/chatwoot.caddy` in the persistent `plane_proxy_data` volume.
   Plane's canonical Caddyfile imports `/data/mesa-sites/*.caddy`, so later Plane deployments retain it.
-- Hard aggregate CPU ceiling: 2 cores; aggregate memory ceiling: 6.5 GB. Low CPU scheduling priority.
+- Hard aggregate CPU ceiling: 2.2 cores; aggregate memory ceiling: 6.75 GB. Low CPU scheduling priority.
   One Puma process, three web threads, two Sidekiq threads. Logs rotate at 30 MB per service.
 - Public account signup disabled. Bootstrap the first confirmed administrator before publishing the route.
-- SMTP uses Plane's existing configured relay. No incoming support mailbox is connected automatically.
+- General mail uses Plane's existing Resend SMTP connection. The dedicated pilot inbox is
+  `vendeuganhou@suporte.mesa.tech`, with Resend for both receiving and outgoing replies.
+  `antonio@mesainc.com.br` is only the administrator; no personal Gmail access is required.
 - Require at least 8 GB available RAM and 10 GB free disk for a deployment. Monitor actual workload
   before expanding adoption; resource limits cannot guarantee performance under future load.
 
@@ -69,7 +71,7 @@ to the private OCI backup bucket under `snapshots/chatwoot/`; existing lifecycle
 current archives 90 days and previous versions 30 days. No Plane object is changed.
 
 To restore, retrieve and verify an archive from OCI, extract it in a root-only directory,
-restore `chatwoot.env` and the archived image/compose revision, start PostgreSQL/Redis, then
+restore `chatwoot.env`, `mail-relay.env`, relay source and the archived image/compose revision, start PostgreSQL/Redis, then
 restore `database.dump` with `pg_restore` into a fresh `chatwoot_production` database. Extract
 `storage.tgz` into `chatwoot_storage`. Before starting Redis, install `redis.rdb` into its volume
 and remove only the replacement instance's empty AOF directory so it loads that snapshot.
@@ -88,3 +90,51 @@ delivered reply with the actual mailbox before routing customer traffic. Website
 also available. Existing Jira Service Management data is not migrated, and no Plane integration
 is configured. Treat this as a support-conversation pilot; validate request types, portals, SLAs,
 approvals, incident/change management and asset management separately before replacing JSM.
+
+## Pilot email configuration
+
+Resend receives `suporte.mesa.tech`. Its signed `email.received` webhook goes to
+`https://chatwoot.mesa.tech/email-ingress/resend`; the small relay retrieves the original MIME
+(including attachments) and posts it to stock Rails ActionMailbox over the private Docker network.
+The public proxy blocks direct ActionMailbox ingress. Only the pilot address and this domain's
+`reply+UUID` recipients are accepted. Resend events for other workspace domains are discarded
+before fetching message contents. MIME message IDs and references are preserved; stock Rails
+handles duplicate deliveries and Chatwoot threads replies. Transfer failures return non-2xx for
+Resend's documented retry/replay mechanism. Check failed deliveries in Resend's webhook dashboard.
+
+Resend currently offers only full-access and sending-only API keys. Receiving content retrieval
+requires a dedicated full-access key in the mesainc workspace, with account-wide permissions;
+there is no receiving-only/domain-restricted key. Keep this key only in root-readable
+`/etc/chatwoot/mail-relay.env`, together with the webhook signing secret and an independent
+ActionMailbox password. Keep the outgoing key separate: sending-only, restricted to
+`suporte.mesa.tech`, in `SUPPORT_SMTP_PASSWORD` in `chatwoot.env`. Do not reuse another application's
+full-access key. The shared ingress password must also be set as `RAILS_INBOUND_EMAIL_PASSWORD`
+in `chatwoot.env`. Set `RAILS_INBOUND_EMAIL_SERVICE=relay`,
+`MAILER_INBOUND_EMAIL_DOMAIN=suporte.mesa.tech`, and `SUPPORT_EMAIL` to the pilot address.
+Remove the unused Google OAuth environment settings from the personal-mailbox setup.
+
+In Resend create/verify the support subdomain in São Paulo, with sending and receiving enabled:
+
+| Type | Name within mesa.tech | Content | Priority |
+| --- | --- | --- | --- |
+| TXT | resend._domainkey.suporte | The support domain's public DKIM value from Resend | — |
+| CNAME | rsend.suporte | rsend-sae1.forge.rmta.net | — |
+| CNAME | send.suporte | send.forge.rmta.net | — |
+| MX | suporte | inbound-smtp.sa-east-1.amazonaws.com | 10 |
+
+Keep CNAME records DNS-only. These records affect only the support subdomain. Leave existing
+root-domain mail records intact. After verification, install the scoped sending key and run
+`configure-support-email.rb` in Rails. It replaces the unused personal pilot inbox with the
+dedicated address and refuses to change an inbox containing conversations. The outgoing channel
+uses SMTP implicit TLS on port 465 with certificate verification.
+
+Build the relay from `mail-relay/`, restart Chatwoot Rails/Sidekiq for environment changes, and start
+`mail-relay`. Install the updated Caddy route with a validated reload. The relay has a 0.2-core,
+256-MB limit, runs without root privileges, uses a read-only filesystem, and logs no email contents.
+Dependency versions and the official Python base image are pinned. Application code remains stock.
+Backups include both private environment files and the relay source for recovery.
+
+Validate signed/invalid/expired webhooks, incoming MIME with attachments, duplicate delivery,
+threaded replies and an actual received email/delivered reply before routing customer traffic.
+SMTP authentication alone does not establish delivery or domain permission. Domain verification,
+credentials and a real transport check are required before calling the email pilot ready.
