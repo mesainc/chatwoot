@@ -1,0 +1,7 @@
+chatwoot.mesa.tech {
+	encode zstd gzip
+	request_body {
+		max_size 25MB
+	}
+	reverse_proxy chatwoot-web:3000
+}
