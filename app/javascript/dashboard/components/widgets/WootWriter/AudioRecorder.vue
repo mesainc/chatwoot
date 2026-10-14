@@ -60,10 +60,11 @@ const getRecordPluginOptions = audioFormat => {
 };
 
 const initWaveSurfer = () => {
+  const theme = getComputedStyle(waveformContainer.value);
   wavesurfer.value = WaveSurfer.create({
     container: waveformContainer.value,
-    waveColor: '#1F93FF',
-    progressColor: '#6E6F73',
+    waveColor: `rgb(${theme.getPropertyValue('--blue-9')})`,
+    progressColor: `rgb(${theme.getPropertyValue('--slate-11')})`,
     height: 100,
     barWidth: 2,
     barGap: 1,

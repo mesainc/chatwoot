@@ -93,6 +93,7 @@ const accent = {
   '--solid-blue-2': '255 246 242',
   '--text-blue': '112 18 47',
   '--border-blue': '190, 53, 47, 0.5',
+  '--border-blue-strong': '143 39 37',
 };
 
 const darkAccent = {
@@ -110,6 +111,7 @@ const darkAccent = {
   '--solid-blue': '57 33 36',
   '--solid-blue-2': '43 29 27',
   '--text-blue': '249 181 178',
+  '--border-blue-strong': '243 123 118',
 };
 
 const rail = {
