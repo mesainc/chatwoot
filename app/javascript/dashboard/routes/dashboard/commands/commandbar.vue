@@ -253,6 +253,7 @@ onMounted(() => {
 <template>
   <ninja-keys
     ref="ninjakeys"
+    class="z-[9999] [--ninja-accent-color:rgb(var(--blue-11))] [--ninja-font-family:Inter,system-ui,sans-serif] [--ninja-overflow-background:rgba(var(--overlay))] [--ninja-modal-background:rgb(var(--solid-1))] [--ninja-secondary-background-color:rgb(var(--slate-3))] [--ninja-selected-background:rgb(var(--blue-3))] [--ninja-selected-text-color:rgb(var(--blue-11))] [--ninja-footer-background:rgb(var(--surface-1))] [--ninja-text-color:rgb(var(--slate-12))] [--ninja-icon-color:rgb(var(--slate-11))] [--ninja-secondary-text-color:rgb(var(--slate-11))] [--ninja-group-text-color:rgb(var(--slate-11))] [--ninja-placeholder-color:rgb(var(--slate-11))] [--ninja-separate-border:1px_solid_rgb(var(--border-weak))]"
     noAutoLoadMdIcons
     hideBreadcrumbs
     :placeholder="placeholder"
@@ -266,26 +267,3 @@ onMounted(() => {
     @close="dismissPendingAttributes"
   />
 </template>
-
-<style lang="scss">
-ninja-keys {
-  --ninja-accent-color: rgba(39, 129, 246, 1);
-  --ninja-font-family: 'Inter';
-  z-index: 9999;
-}
-
-// Wrapped with body.dark to avoid overriding the default theme
-// If OS is in dark theme and app is in light mode, It will prevent showing dark theme in command bar
-body.dark {
-  ninja-keys {
-    --ninja-overflow-background: rgba(26, 29, 30, 0.5);
-    --ninja-modal-background: #151718;
-    --ninja-secondary-background-color: #26292b;
-    --ninja-selected-background: #26292b;
-    --ninja-footer-background: #2b2f31;
-    --ninja-text-color: #f8faf9;
-    --ninja-icon-color: #f8faf9;
-    --ninja-secondary-text-color: #c2c9c6;
-  }
-}
-</style>
