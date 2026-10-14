@@ -30,7 +30,7 @@ case "$service" in
     tar -C "$storage" -czf "$work/storage.tgz" .
     ;;
   s3_compatible)
-    docker compose --env-file /etc/chatwoot/chatwoot.env -f compose.yaml run --rm --no-deps -T \
+    docker compose --env-file /etc/chatwoot/chatwoot.env -f compose.yaml run --rm --no-deps -T --interactive=false \
       --entrypoint bundle -v "$work:/snapshot" \
       -v /usr/local/lib/chatwoot/storage/files.rb:/tmp/storage-files.rb:ro \
       rails exec rails runner /tmp/storage-files.rb snapshot /snapshot/object-storage > "$work/storage.log" 2>&1

@@ -123,6 +123,38 @@ when 'migrate-local'
     raise 'Database references changed during migration' unless count == blobs.size
   end
   puts({ migrated_objects: sources.size, migrated_blobs: blobs.size, bytes: files.sum { |path| File.size(path) }, verified: true }.to_json)
+when 'verify-live'
+  raise 'Default storage has not switched' unless ActiveStorage::Blob.service.name == :s3_compatible
+
+  fixture = ActiveStorage::Blob.create_and_upload!(io: StringIO.new("Mesa Chatwoot fresh upload verification\n"),
+                                                 filename: 'mesa-storage-verification.txt', content_type: 'text/plain')
+  begin
+    blobs = ActiveStorage::Blob.order(:id).to_a
+    blobs.each do |blob|
+      raise 'Blob still uses local storage' unless blob.service_name == 's3_compatible'
+
+      frontend = URI(ENV.fetch('FRONTEND_URL'))
+      url = Rails.application.routes.url_helpers.rails_blob_url(blob, host: frontend.host, protocol: frontend.scheme)
+      redirect = Net::HTTP.get_response(URI(url))
+      raise 'Chatwoot attachment redirect failed' unless redirect.is_a?(Net::HTTPRedirection)
+
+      target = URI(redirect.fetch('location'))
+      raise 'Attachment redirect is not to OCI' unless target.scheme == 'https' && target.host == URI(ENV.fetch('STORAGE_ENDPOINT')).host
+
+      digest, size = Digest::MD5.new, 0
+      Net::HTTP.start(target.host, target.port, use_ssl: true, read_timeout: 60, open_timeout: 30) do |http|
+        http.request(Net::HTTP::Get.new(target)) do |response|
+          raise 'Attachment download failed' unless response.is_a?(Net::HTTPSuccess)
+
+          response.read_body { |chunk| digest.update(chunk); size += chunk.bytesize }
+        end
+      end
+      raise 'Attachment bytes differ from database' unless size == blob.byte_size && digest.base64digest == blob.checksum
+    end
+    puts({ existing_downloads: blobs.size - 1, fresh_upload_download: true, verified: true }.to_json)
+  ensure
+    fixture.purge
+  end
 when 'snapshot'
   raise 'Snapshot directory already exists' if File.exist?(directory)
 
@@ -179,5 +211,5 @@ when 'verify', 'restore', 'restore-drill'
   end
   puts({ command: command, verified_objects: manifest.fetch('objects').size, verified_blobs: manifest.fetch('blobs').size, verified: true }.to_json)
 else
-  raise 'Use probe, migrate-local, snapshot DIRECTORY, verify DIRECTORY, restore DIRECTORY or restore-drill DIRECTORY'
+  raise 'Use probe, migrate-local, verify-live, snapshot DIRECTORY, verify DIRECTORY, restore DIRECTORY or restore-drill DIRECTORY'
 end

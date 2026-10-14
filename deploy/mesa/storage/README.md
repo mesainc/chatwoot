@@ -41,7 +41,7 @@ From `/home/ubuntu/chatwoot`, use a one-off container with the **current deploye
 environment, database/network and original storage volume:
 
 ```sh
-docker compose --env-file /etc/chatwoot/chatwoot.env -f compose.yaml run --rm --no-deps -T \
+docker compose --env-file /etc/chatwoot/chatwoot.env -f compose.yaml run --rm --no-deps -T --interactive=false \
   --entrypoint bundle -v /usr/local/lib/chatwoot/storage/files.rb:/tmp/storage-files.rb:ro \
   rails exec rails runner /tmp/storage-files.rb probe
 ```
@@ -56,7 +56,7 @@ The source volume is retained. Writers must remain stopped throughout this opera
 
 Activate the credentials with `update_env.py ... --activate`, validate compose, then recreate only
 Rails/Sidekiq with `up -d --no-deps --wait --wait-timeout 300 rails sidekiq`. Verify downloads through
-Chatwoot, a fresh upload, web/worker health, and Plane. Take a new off-host backup. No app-image build
+Chatwoot and a fresh upload with `verify-live`, plus web/worker health and Plane. Take a new off-host backup. No app-image build
 or schema migration is required. Record the merged deployment source revision in `REVISION`.
 
 ## Backups and recovery
